@@ -9,7 +9,7 @@ import * as anon from '../../src/benchmark/apex/anon';
 import * as legacy from '../../src/benchmark/apex/legacy';
 import { ApexBenchmarkService } from '../../src/service/apex';
 
-import { GovernorLimits } from '../../src/benchmark/schemas';
+import { GovernorLimits } from '../../src/benchmark/apex/schemas';
 import { Connection } from '@salesforce/core';
 
 const legacyContent = `

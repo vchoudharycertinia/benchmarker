@@ -2,15 +2,13 @@
  * Copyright (c) 2025 Certinia Inc. All rights reserved.
  */
 
-import { extractAssertionData } from '../../org/execute';
-import { ExecuteAnonymousResponse } from '../../org/soap/executeAnonymous';
-import { limitsSchema } from '../schemas';
+import { ApexBenchmarkOptions } from '../apex';
 import {
+  AnonApexAction,
   AnonApexBenchmark,
-  AnonApexBenchmarkResult,
-  AnonApexTransaction,
   AnonApexTransactionType,
 } from './anon';
+import { LimitsContext, limitsSchema } from './schemas';
 
 /**
  * Old (deprecated) test structure, with manual tracking and return of limits.
@@ -25,25 +23,18 @@ import {
  * System.assert(false, '-_' + JSON.serialize(limitsDiff) + '_-');
  */
 export class LegacyAnonApexBenchmark extends AnonApexBenchmark {
-  async prepare(actions?: string[]): Promise<void> {
+  constructor(options: ApexBenchmarkOptions) {
+    super(options, limitsSchema);
+  }
+
+  async prepare(actions?: AnonApexAction<LimitsContext>[]): Promise<void> {
+    const { code } = this.options;
     this.transactions = [
       {
-        action: (actions && actions[0]) || '1',
-        apexCode:
-          require('../../../scripts/apex/limits.apex') + this.params.code,
+        action: (actions && actions[0]) || { name: '1' },
+        apexCode: require('../../../scripts/apex/limits.apex') + code,
         type: AnonApexTransactionType.Data,
       },
     ];
-  }
-
-  protected toBenchmarkResult(
-    response: ExecuteAnonymousResponse,
-    transaction: AnonApexTransaction
-  ): AnonApexBenchmarkResult {
-    return {
-      name: this.name,
-      action: transaction.action,
-      limits: extractAssertionData(response, limitsSchema),
-    };
   }
 }

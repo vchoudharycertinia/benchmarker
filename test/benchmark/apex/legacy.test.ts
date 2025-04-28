@@ -4,8 +4,8 @@
 
 import { expect } from 'chai';
 import sinon, { SinonStub } from 'sinon';
-import * as exec from '../../../src/org/execute';
-import { GovernorLimits } from '../../../src/benchmark/schemas';
+import * as exec from '../../../src/salesforce/execute';
+import { GovernorLimits } from '../../../src/benchmark/apex/schemas';
 import { LegacyAnonApexBenchmark } from '../../../src/benchmark/apex/legacy';
 import { Connection } from '@salesforce/core';
 import { AnonApexBenchmarkResult } from '../../../src/benchmark/apex/anon';

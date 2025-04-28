@@ -10,7 +10,7 @@ import * as envVarsHelper from '../../../src/services/salesforce/env';
 import {
   getSalesforceAuthInfoFromEnvVars,
   connectToSalesforceOrg,
-} from '../../../src/services/salesforce/connection';
+} from '../../../src/salesforce/org/connection';
 import { AuthInfo, Connection } from '@salesforce/core';
 import jsforce from '@jsforce/jsforce-node';
 

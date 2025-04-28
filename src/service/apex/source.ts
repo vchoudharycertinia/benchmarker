@@ -4,13 +4,26 @@
 
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { replaceTokensInString } from '../../services/tokenReplacement';
-import { ApexBenchmarkOptions } from '../../benchmark/apex';
+import {
+  replaceTokensInString,
+  TokenReplacement,
+} from '../../services/tokenReplacement';
 import { Stats } from 'node:fs';
 
 export interface ApexDirectory {
   root: string;
   paths: string[];
+}
+
+export interface ApexSourceOptions {
+  /**
+   * Map of string value replacement applied on Apex code.
+   *
+   * @example
+   * tokens: [{ token: '%var', value: '100' }]
+   * // Integer i = %var; -> Integer i = 100;
+   */
+  tokens?: TokenReplacement[];
 }
 
 interface PathDescription {
@@ -20,7 +33,7 @@ interface PathDescription {
 
 export async function readApex(
   content: string,
-  options?: ApexBenchmarkOptions
+  options?: ApexSourceOptions
 ): Promise<string> {
   const preCode = replaceTokensInString(content, options?.tokens);
 
@@ -29,14 +42,14 @@ export async function readApex(
 
 export async function readApexFromFile(
   filePath: string,
-  options?: ApexBenchmarkOptions
+  options?: ApexSourceOptions
 ): Promise<string> {
   const apex = await fs.readFile(filePath, { encoding: 'utf8' });
   return readApex(apex, options);
 }
 
 export async function findApexInDir(dir: string): Promise<ApexDirectory> {
-  const { absolutePath, stats } = await describePath(dir); // describe
+  const { absolutePath, stats } = await describePath(dir);
 
   if (!stats.isDirectory()) {
     throw new Error(`${absolutePath} is not a directory.`);

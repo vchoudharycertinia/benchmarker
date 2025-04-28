@@ -20,6 +20,9 @@ import { getExternalBuildId } from '../../shared/env';
 import { Org, OrgContext } from '../org/context';
 import { Package } from '../org/packages';
 
+// TODO move to db mapper
+// eliminate save func?
+
 export async function save(
   testResults: TestResult[],
   orgContext: OrgContext,
@@ -103,7 +106,16 @@ async function saveOrg(orgInfoToSave: Org): Promise<OrgInfo> {
   );
   if (!orgInfo) {
     orgInfo = new OrgInfo();
-    orgInfo.fillOrgContextInformation(orgInfoToSave);
+    orgInfo.orgId = orgInfoToSave.orgID;
+    orgInfo.releaseVersion = orgInfoToSave.releaseVersion;
+    orgInfo.apiVersion = orgInfoToSave.apiVersion;
+    orgInfo.orgType = orgInfoToSave.orgType;
+    orgInfo.instance = orgInfoToSave.orgInstance;
+    orgInfo.isLex = orgInfoToSave.isLex;
+    orgInfo.isMulticurrency = orgInfoToSave.isMulticurrency;
+    orgInfo.isSandbox = orgInfoToSave.isSandbox;
+    orgInfo.isTrial = orgInfoToSave.isTrial;
+
     orgInfo = await saveOrgInfo(orgInfo);
   }
   return orgInfo;

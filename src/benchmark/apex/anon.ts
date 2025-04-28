@@ -2,30 +2,26 @@
  * Copyright (c) 2025 Certinia Inc. All rights reserved.
  */
 
-import { DebugLogInfo } from '../../org/soap/debug';
+import { DebugLogInfo } from '../../salesforce/soap/debug';
 import {
   Benchmark,
-  BenchmarkParams,
+  BenchmarkAction,
   BenchmarkResult,
   ErrorResult,
 } from '../base';
-import { Connection } from '@salesforce/core';
-import { benchmarkSchema, GovernorLimits } from '../schemas';
+import { GovernorLimits, LimitsContext } from './schemas';
 import {
   executeAnonymous,
   assertAnonymousError,
   extractAssertionData,
-} from '../../org/execute';
-import { ExecuteAnonymousResponse } from '../../org/soap/executeAnonymous';
+} from '../../salesforce/execute';
+import { ExecuteAnonymousResponse } from '../../salesforce/soap/executeAnonymous';
+import { RunContext } from '../../state/context';
+import { ApexBenchmarkOptions } from '../apex';
+import { NamedSchema } from '../../text/json';
 
-export interface AnonApexBenchmarkParams extends BenchmarkParams {
-  code: string;
-  connection: Connection;
-  debug?: DebugLogInfo[];
-}
-
-export interface AnonApexTransaction {
-  action: string;
+export interface AnonApexTransaction<C> {
+  action: AnonApexAction<C>;
   apexCode: string;
   type: AnonApexTransactionType;
 }
@@ -35,8 +31,14 @@ export enum AnonApexTransactionType {
   Execute,
 }
 
-export interface AnonApexBenchmarkResult extends BenchmarkResult {
-  limits: GovernorLimits;
+export interface AnonApexAction<C> extends BenchmarkAction {
+  context?: C;
+  debug?: DebugLogInfo[];
+}
+
+export interface AnonApexBenchmarkResult<T, C>
+  extends BenchmarkResult<AnonApexAction<C>> {
+  data: T;
 }
 
 /**
@@ -51,18 +53,28 @@ export interface AnonApexBenchmarkResult extends BenchmarkResult {
  * benchmark.stop();
  * // teardown, extra assertions
  */
-export class AnonApexBenchmark extends Benchmark<
-  AnonApexBenchmarkParams,
-  AnonApexBenchmarkResult
-> {
-  protected transactions: AnonApexTransaction[] = [];
+export class AnonApexBenchmark<
+  T = GovernorLimits,
+  C = LimitsContext,
+> extends Benchmark<AnonApexAction<C>, AnonApexBenchmarkResult<T, C>> {
+  protected transactions: AnonApexTransaction<C>[] = [];
+  protected options: ApexBenchmarkOptions;
+  protected schema: NamedSchema<T>;
+
+  constructor(options: ApexBenchmarkOptions, schema: NamedSchema<T>) {
+    super(options.name);
+    this.options = options;
+    this.schema = schema;
+  }
 
   /**
    * Prepares an Anonymous Apex script for run. Injects required framework
    * code. Optionally splits into multiple transactions.
+   *
+   * @param actions Override actions configuration in the benchmark.
    */
-  async prepare(actions?: string[]): Promise<void> {
-    const code = this.params.code;
+  async prepare(actions?: AnonApexAction<C>[]): Promise<void> {
+    const { code } = this.options;
 
     let content;
     if (!code.includes('benchmark.start(')) {
@@ -74,7 +86,7 @@ export class AnonApexBenchmark extends Benchmark<
 
     this.transactions = [
       {
-        action: (actions && actions[0]) || '1',
+        action: (actions && actions[0]) || { name: '1' },
         apexCode:
           require('../../../scripts/apex/limits.apex') +
           require('../../../scripts/apex/benchmark.apex') +
@@ -93,15 +105,15 @@ export class AnonApexBenchmark extends Benchmark<
     this.reset();
 
     for (const transaction of this.transactions) {
-      if (this._errors.length != 0) {
+      if (this._error) {
         break;
       }
 
       try {
         const response = await executeAnonymous(
-          this.params.connection,
+          RunContext.current.org.connection,
           transaction.apexCode,
-          this.params.debug
+          transaction.action.debug || this.options.debug
         );
 
         if (transaction.type === AnonApexTransactionType.Data) {
@@ -115,44 +127,29 @@ export class AnonApexBenchmark extends Benchmark<
           }
         }
       } catch (e) {
-        this._errors.push(this.toErrorResult(e, transaction));
+        this._error = this.toErrorResult(e, transaction);
       }
     }
   }
 
   protected toBenchmarkResult(
     response: ExecuteAnonymousResponse,
-    transaction: AnonApexTransaction
-  ): AnonApexBenchmarkResult {
-    const benchmark = extractAssertionData(response, benchmarkSchema);
-
-    if (!benchmark.limits) {
-      throw new Error('Apex did not collect limits usage.');
-    }
-
-    // replace default name (i.e. file name)
-    // and default action
-    if (benchmark.name) {
-      this.name = benchmark.name;
-    }
-    if (benchmark.action) {
-      transaction.action = benchmark.action;
-    }
-
+    transaction: AnonApexTransaction<C>
+  ): AnonApexBenchmarkResult<T, C> {
     return {
       name: this.name,
       action: transaction.action,
-      limits: benchmark.limits,
+      data: extractAssertionData(response, this.schema),
     };
   }
 
   protected toErrorResult(
     e: unknown,
-    transaction: AnonApexTransaction
+    transaction: AnonApexTransaction<C>
   ): ErrorResult {
     return {
       name: this.name,
-      action: transaction.action,
+      actionName: transaction.action.name,
       error: e instanceof Error ? e : new Error(`${e}`),
     };
   }

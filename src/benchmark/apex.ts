@@ -2,38 +2,55 @@
  * Copyright (c) 2025 Certinia Inc. All rights reserved.
  */
 
-import { AnonApexBenchmark, AnonApexBenchmarkParams } from './apex/anon';
+import { LimitsDeg } from '../metrics/limits';
+import { DebugLogInfo } from '../salesforce/soap/debug';
+import {
+  AnonApexAction,
+  AnonApexBenchmark,
+  AnonApexBenchmarkResult,
+} from './apex/anon';
 import { LegacyAnonApexBenchmark } from './apex/legacy';
-import { TokenReplacement } from '../services/tokenReplacement';
+import { GovernorLimits, LimitsContext, limitsSchema } from './apex/schemas';
 
-export interface ApexBenchmarkOptions {
+export type ApexBenchmark = AnonApexBenchmark;
+export type ApexAction = AnonApexAction<LimitsContext>;
+export type ApexMetrics = {
+  deg?: LimitsDeg;
+};
+export type ApexBenchmarkResult = AnonApexBenchmarkResult<
+  GovernorLimits,
+  LimitsContext
+> &
+  ApexMetrics;
+
+export interface AnonymousOptions {
   /**
-   * Map of string value replacement applied on Apex code.
-   *
-   * @example
-   * tokens: [{ token: '%var', value: '100' }]
-   * // Integer i = %var; -> Integer i = 100;
+   * Set debug logging behaviour.
    */
-  tokens?: TokenReplacement[];
-  /**
-   * List of namespaces to be removed from any Apex code.
-   *
-   * Removes the need to write separate benchmark scripts for managed and
-   * unmanaged executions.
-   */
-  unmanagedNamespaces?: string[];
+  debug?: DebugLogInfo[];
 }
 
-export function createAnonApexBenchmark(
-  name: string,
-  params: AnonApexBenchmarkParams
-): AnonApexBenchmark {
+export interface ApexBenchmarkOptions extends AnonymousOptions {
+  /**
+   * Name to identify the benchmark run in final results.
+   */
+  name: string;
+
+  /**
+   * Full apex script to be used in benchmark.
+   */
+  code: string;
+}
+
+export function createApexBenchmark(
+  options: ApexBenchmarkOptions
+): ApexBenchmark {
   if (
-    params.code.includes('new GovernorLimits()') &&
-    params.code.includes("System.assert(false, '-_'")
+    options.code.includes('new GovernorLimits()') &&
+    options.code.includes("System.assert(false, '-_'")
   ) {
-    return new LegacyAnonApexBenchmark(name, params);
+    return new LegacyAnonApexBenchmark(options);
   }
 
-  return new AnonApexBenchmark(name, params);
+  return new AnonApexBenchmark(options, limitsSchema);
 }

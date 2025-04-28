@@ -3,7 +3,7 @@
  */
 
 import { expect } from 'chai';
-import { SalesforceConnection } from '../../../src/services/salesforce/connection';
+import { SalesforceConnection } from '../../../src/salesforce/org/connection';
 import { AuthInfo } from '@salesforce/core';
 import sinon from 'sinon';
 

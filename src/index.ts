@@ -25,5 +25,5 @@ export {
   createApexExecutionTestStepFlowFromApex,
 } from './testTemplates/testStepFlowHelper';
 export { saveResults } from './testTemplates/saveResult';
-export type { SalesforceConnection } from './services/salesforce/connection';
+export type { BenchmarkOrgConnection as SalesforceConnection } from './salesforce/org/connection';
 export { TokenReplacement } from './services/tokenReplacement';

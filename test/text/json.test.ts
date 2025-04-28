@@ -9,7 +9,7 @@ import {
   benchmarkSchema,
   GovernorLimits,
   limitsSchema,
-} from '../../src/benchmark/schemas';
+} from '../../src/benchmark/apex/schemas';
 
 describe('text/json', () => {
   it('should parse a benchmark', () => {

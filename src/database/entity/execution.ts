@@ -5,21 +5,18 @@
 
 import { Entity, Column } from 'typeorm';
 import { PerformanceBaseEntity } from './base';
-import { DEFAULT_NUMERIC_VALUE } from '../../shared/constants';
 
 @Entity({ name: 'execution_info' })
 export class ExecutionInfo extends PerformanceBaseEntity {
-  [key: string]: number | string | Date | undefined;
-
   @Column('integer', { nullable: true, name: 'test_result_id' })
-  public testResultId = DEFAULT_NUMERIC_VALUE;
+  public testResultId: number;
 
   @Column('integer', { nullable: true, name: 'org_info_id' })
-  public orgInfoId = DEFAULT_NUMERIC_VALUE;
+  public orgInfoId: number;
 
   @Column('integer', { nullable: true, name: 'package_info_id' })
-  public packageInfoId = DEFAULT_NUMERIC_VALUE;
+  public packageInfoId: number;
 
   @Column('text', { nullable: true, name: 'external_build_id' })
-  public externalBuildId = '';
+  public externalBuildId: string;
 }

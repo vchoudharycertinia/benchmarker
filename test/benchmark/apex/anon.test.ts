@@ -4,13 +4,13 @@
 
 import { expect } from 'chai';
 import sinon, { SinonStub } from 'sinon';
-import * as exec from '../../../src/org/execute';
+import * as exec from '../../../src/salesforce/execute';
 import {
   AnonApexBenchmark,
   AnonApexBenchmarkResult,
 } from '../../../src/benchmark/apex/anon';
 import { Connection } from '@salesforce/core';
-import { BenchmarkResponse } from '../../../src/benchmark/schemas';
+import { BenchmarkResponse } from '../../../src/benchmark/apex/schemas';
 import { ErrorResult } from '../../../src/benchmark/base';
 
 const mockResponse: BenchmarkResponse = {

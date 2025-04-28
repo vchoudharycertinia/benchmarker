@@ -11,11 +11,11 @@ import {
 
 export class PerformanceBaseEntity {
   @PrimaryGeneratedColumn()
-  public id = 0;
+  public id: number;
 
   @CreateDateColumn({ name: 'create_date_time' })
-  public createDateTime: Date | undefined;
+  public createDateTime: Date;
 
   @UpdateDateColumn({ name: 'update_date_time' })
-  public updateDateTime: Date | undefined;
+  public updateDateTime: Date;
 }

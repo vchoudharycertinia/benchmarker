@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 FinancialForce.com, inc. All rights reserved.
+ * Copyright (c) 2025 Certinia Inc. All rights reserved.
  */
 
 import {
@@ -8,26 +8,21 @@ import {
   ConfigAggregator,
   StateAggregator,
 } from '@salesforce/core';
-import jsforce, {
-  ConnectionConfig,
-  HttpRequest,
-  Schema,
-} from '@jsforce/jsforce-node';
-import {
-  getSfdxUsername,
-  getSalesforceUsername,
-  getSalesforcePassword,
-  getSalesforceToken,
-  getSalesforceUrlLogin,
-} from './env';
+import jsforce, { HttpRequest } from '@jsforce/jsforce-node';
+
+export interface OrgAuthInfo {
+  username: string;
+  password?: string; // password&token
+  loginUrl?: string;
+  version?: string;
+}
 
 /**
  * Handles connections and requests to Salesforce org
  */
-export class SalesforceConnection extends Connection {
-  public constructor(options: Connection.Options<Schema>) {
-    super(options);
-  }
+export class BenchmarkOrgConnection extends Connection {
+  // TODO override request with retry (and bypass method)
+  // override query / sobject w unmanagedNamespaces filter ?
 
   async replaceClasses(sources: Map<string, string>) {
     const nameList = Array.from(sources.keys())
@@ -51,31 +46,14 @@ export class SalesforceConnection extends Connection {
 }
 
 /**
- * Wraps credentials required to connect to Salesforce org
- */
-export interface SalesforceAuthInfo {
-  username: string;
-  password?: string; // password&token
-  loginUrl?: string;
-  isSFDX?: boolean;
-  version?: string;
-}
-
-/**
  * Connects to Salesforce org given an org credentials
  * @param authInfoWrapper wraps the credentials needed to connect to an org
- * @example
- * ```typescript
- * const connectionSFDXorg: SalesforceConnection = await connectToSalesforceOrg({ username: getSfdxUsername(), isSFDX: true });
- * const connectionNonSFDXorg: SalesforceConnection =  await connectToSalesforceOrg({username: getSalesforceUsername(), password: getSalesforcePassword() + getSalesforceToken(), loginUrl: getSalesforceUrlLogin()});
- * //Using getSalesforceAuthInfoFromEnvVars() to retrieve the needed credentials
- * const connectionWithWrapper = await connectToSalesforceOrg(getSalesforceAuthInfoFromEnvVars());
- * ```
  */
 export async function connectToSalesforceOrg(
-  authInfoWrapper: SalesforceAuthInfo
-): Promise<SalesforceConnection> {
-  let connection: SalesforceConnection;
+  authInfoWrapper: OrgAuthInfo
+): Promise<BenchmarkOrgConnection> {
+  const { username, password, loginUrl } = authInfoWrapper;
+  let connection: BenchmarkOrgConnection;
 
   let version = authInfoWrapper.version;
   if (!version) {
@@ -85,17 +63,14 @@ export async function connectToSalesforceOrg(
   }
 
   try {
-    if (authInfoWrapper.isSFDX) {
-      connection = await connectWithSFDXAliasOrUsername(
-        authInfoWrapper.username,
-        version
-      );
-    } else if (authInfoWrapper.password) {
+    if (username && !password) {
+      connection = await connectWithSFDXAliasOrUsername(username, version);
+    } else if (password) {
       connection = await connectWithUsernameAndPassword(
-        authInfoWrapper.loginUrl,
-        authInfoWrapper.username,
-        authInfoWrapper.password,
-        authInfoWrapper.version
+        loginUrl,
+        username,
+        password,
+        version
       );
     } else {
       throw new Error('Password is required for non-SFDX login');
@@ -108,18 +83,6 @@ export async function connectToSalesforceOrg(
 
   return connection;
 }
-/**
- * Returns Salesforce login credentials from environment variables
- */
-export function getSalesforceAuthInfoFromEnvVars(): SalesforceAuthInfo {
-  return getSfdxUsername()
-    ? { username: getSfdxUsername(), isSFDX: true }
-    : {
-        username: getSalesforceUsername(),
-        password: getSalesforcePassword() + getSalesforceToken(),
-        loginUrl: getSalesforceUrlLogin(),
-      };
-}
 
 /*
  * Connect to an org using an sfdx alias or username. This roughly follows the process used in
@@ -128,7 +91,7 @@ export function getSalesforceAuthInfoFromEnvVars(): SalesforceAuthInfo {
 async function connectWithSFDXAliasOrUsername(
   aliasOrUserName: string,
   version: string | undefined
-): Promise<SalesforceConnection> {
+): Promise<BenchmarkOrgConnection> {
   const stateAggregator = await StateAggregator.getInstance();
   const connection = await connect(
     await AuthInfo.create({
@@ -157,7 +120,7 @@ async function connectWithUsernameAndPassword(
   username: string,
   password: string,
   version: string | undefined
-): Promise<SalesforceConnection> {
+): Promise<BenchmarkOrgConnection> {
   const jsForceConnection = new jsforce.Connection({
     loginUrl: loginUrl,
   });
@@ -167,28 +130,23 @@ async function connectWithUsernameAndPassword(
     username: jsForceConnection.accessToken || undefined,
   });
 
-  const connection: SalesforceConnection = await connect(authInfo, version);
+  const connection = await connect(authInfo, version);
   connection.instanceUrl = jsForceConnection.instanceUrl;
   return connection;
 }
 
 /*
- * Create our custom connection type, SalesforceConnection derived from the
+ * Create our custom connection type, BenchmarkOrgConnection derived from the
  * @salesforce/core Connection.
  */
 async function connect(
   authInfo: AuthInfo,
-  version: string | undefined
-): Promise<SalesforceConnection> {
-  const connectionOptions: ConnectionConfig<Schema> = {
-    version,
-    callOptions: {
-      client: `sfdx toolbelt:${process.env.SFDX_SET_CLIENT_IDS ?? ''}`,
+  version?: string
+): Promise<BenchmarkOrgConnection> {
+  return (await BenchmarkOrgConnection.create({
+    authInfo,
+    connectionOptions: {
+      version,
     },
-    ...authInfo.getConnectionOptions(),
-  } as ConnectionConfig<Schema>;
-
-  const conn = new SalesforceConnection({ authInfo, connectionOptions });
-  await conn.init();
-  return conn;
+  })) as BenchmarkOrgConnection;
 }

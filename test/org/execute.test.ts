@@ -9,19 +9,19 @@ import { AuthInfo, Connection } from '@salesforce/core';
 import {
   ExecuteAnonymousResponse,
   ExecuteAnonymousSoapResponse,
-} from '../../src/org/soap/executeAnonymous';
+} from '../../src/salesforce/soap/executeAnonymous';
 import { HttpRequest } from '@jsforce/jsforce-node';
 import {
   DebugLogCategory,
   DebugLogCategoryLevel,
-} from '../../src/org/soap/debug';
+} from '../../src/salesforce/soap/debug';
 import {
   assertAnonymousError,
   executeAnonymous,
   ExecuteAnonymousCompileError,
   ExecuteAnonymousError,
   extractAssertionData,
-} from '../../src/org/execute';
+} from '../../src/salesforce/execute';
 import { NamedSchema } from '../../src/text/json';
 
 type ExecBody =

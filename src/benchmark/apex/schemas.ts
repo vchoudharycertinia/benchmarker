@@ -2,7 +2,7 @@
  * Copyright (c) 2025 Certinia Inc. All rights reserved.
  */
 
-import { NamedSchema } from '../text/json';
+import { NamedSchema } from '../../text/json';
 
 export interface GovernorLimits {
   timer: number;
@@ -16,10 +16,18 @@ export interface GovernorLimits {
   futureCalls: number;
 }
 
-export interface BenchmarkResponse {
-  name: string | null;
-  action: string | null;
-  limits: GovernorLimits | null;
+export interface LimitsThresholds {
+  cpuTimeThreshold: number;
+  dmlStatementThreshold: number;
+  dmlRowThreshold: number;
+  heapSizeThreshold: number;
+  queryRowsThreshold: number;
+  soqlQueriesThreshold: number;
+}
+
+export interface LimitsContext {
+  enableMetrics?: boolean;
+  thresholds?: LimitsThresholds;
 }
 
 export const limitsSchema: NamedSchema<GovernorLimits> = {
@@ -39,14 +47,4 @@ export const limitsSchema: NamedSchema<GovernorLimits> = {
   },
 };
 
-export const benchmarkSchema: NamedSchema<BenchmarkResponse> = {
-  name: 'benchmark',
-  schema: {
-    properties: {
-      name: { type: 'string', nullable: true },
-      action: { type: 'string', nullable: true },
-      limits: { ...limitsSchema.schema, nullable: true },
-    },
-    additionalProperties: true,
-  },
-};
+// TODO contextSchema

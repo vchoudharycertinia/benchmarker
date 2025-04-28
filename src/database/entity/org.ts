@@ -5,59 +5,33 @@
 
 import { Entity, Column } from 'typeorm';
 import { PerformanceBaseEntity } from './base';
-import { Org } from '../../services/org/context';
 
 @Entity({ name: 'org_info' })
 export class OrgInfo extends PerformanceBaseEntity {
-  [key: string]:
-    | number
-    | string
-    | Date
-    | boolean
-    | undefined
-    | (() => string)
-    | ((orgInfo: Org) => void);
-
   @Column('text', { nullable: true, name: 'org_id' })
-  public orgId = '';
+  public orgId: string;
 
   @Column('text', { nullable: true, name: 'release_version' })
-  public releaseVersion = '';
+  public releaseVersion: string;
 
   @Column('text', { nullable: true, name: 'api_version' })
-  public apiVersion = '';
+  public apiVersion: string;
 
   @Column('text', { nullable: true, name: 'org_type' })
-  public orgType = '';
+  public orgType: string;
 
   @Column('text', { nullable: true })
-  public instance = '';
+  public instance: string;
 
   @Column('boolean', { nullable: true, name: 'is_lex' })
-  public isLex = false;
+  public isLex: boolean;
 
   @Column('boolean', { nullable: true, name: 'is_multicurrency' })
-  public isMulticurrency = false;
+  public isMulticurrency: boolean;
 
   @Column('boolean', { nullable: true, name: 'is_sandbox' })
-  public isSandbox = false;
+  public isSandbox: boolean;
 
   @Column('boolean', { nullable: true, name: 'is_trial' })
-  public isTrial = false;
-
-  public constructor() {
-    super();
-  }
-
-  public fillOrgContextInformation(orgInfo: Org) {
-    this.orgId = orgInfo.orgID;
-    this.releaseVersion = orgInfo.releaseVersion;
-    this.apiVersion = orgInfo.apiVersion;
-    this.orgType = orgInfo.orgType;
-    this.instance = orgInfo.orgInstance;
-    this.isLex = orgInfo.isLex;
-    this.isMulticurrency = orgInfo.isMulticurrency;
-    this.isSandbox = orgInfo.isSandbox;
-    this.isTrial = orgInfo.isTrial;
-  }
+  public isTrial: boolean;
 }

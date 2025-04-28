@@ -3,7 +3,7 @@
  */
 
 import { expect } from 'chai';
-import { connectToSalesforceOrg } from '../src/services/salesforce/connection';
+import { connectToSalesforceOrg } from '../src/salesforce/org/connection';
 
 describe('Connection', function () {
   before(async function () {});

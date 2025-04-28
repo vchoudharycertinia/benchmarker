@@ -6,7 +6,7 @@ import { expect } from 'chai';
 import {
   connectToSalesforceOrg,
   getSalesforceAuthInfoFromEnvVars,
-} from '../src/services/salesforce/connection';
+} from '../src/salesforce/org/connection';
 import { ApexBenchmarkService } from '../src/service/apex';
 import { Connection } from '@salesforce/core';
 
